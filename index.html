@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#172b4d"><title>SS plan — Dessinateur de façade</title>
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+:root{--navy:#172b4d;--blue:#2463a6;--bg:#f3f6fa;--line:#dce3ec;--muted:#64748b}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font:15px system-ui,-apple-system,Segoe UI,sans-serif;color:#172033}
+header{background:var(--navy);color:white;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.logo{font-size:23px;font-weight:850}.logo span{color:#77c4ff}
+main{max-width:1200px;margin:20px auto;padding:0 14px}.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+h1{font-size:24px;margin:0}h2{font-size:18px;margin:0 0 12px}p{color:var(--muted);margin:5px 0 14px}
+button,select,input{font:inherit;border-radius:9px;padding:9px 11px;border:1px solid var(--line);background:white}
+button{background:var(--blue);color:white;border:0;font-weight:650;cursor:pointer}button.secondary{background:white;color:var(--navy);border:1px solid var(--line)}
+.layout{display:grid;grid-template-columns:320px 1fr;gap:14px;margin-top:16px}
+.card{background:white;border:1px solid var(--line);border-radius:14px;padding:15px;box-shadow:0 3px 12px #172b4d0a}
+.field{display:flex;flex-direction:column;gap:4px;margin:9px 0}.field label{font-size:12px;color:var(--muted)}.field input,.field select{width:100%}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.row>*{flex:1}
+.tools button{font-size:13px;padding:8px}.tools{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.canvasWrap{overflow:auto;background:#eef3f8;border-radius:10px;padding:10px;min-height:390px}
+svg{display:block;min-width:560px;width:100%;height:auto;background:#fff;border:1px solid #d6e0eb;border-radius:8px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}.stat{background:#f6f8fb;border-radius:9px;padding:9px}.stat b{display:block;font-size:20px;color:var(--navy)}.stat small{color:var(--muted)}
+table{width:100%;border-collapse:collapse;margin-top:8px}td,th{padding:8px;border-bottom:1px solid var(--line);text-align:left;font-size:13px}th{color:var(--muted)}
+.notice{background:#fff8e6;border:1px solid #f2d58b;padding:11px;border-radius:10px;color:#70551b;font-size:12px;margin-top:14px}
+.obstacle{display:flex;justify-content:space-between;gap:8px;border-bottom:1px solid var(--line);padding:7px 0;font-size:13px}
+footer{max-width:1200px;margin:22px auto;padding:0 14px 25px;color:var(--muted);font-size:12px}
+@media(max-width:800px){.layout{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}}
+</style></head>
+<body>
+<header><div class="logo">SS <span>plan</span></div><div class="row" style="max-width:250px"><select id="lang"><option value="fr">Français</option><option value="de">Deutsch</option><option value="it">Italiano</option></select><button class="secondary" id="print" style="color:white;background:#29466f;border-color:#486080">PDF / Imprimer</button></div></header>
+<main>
+<div class="top"><div><h1 id="title">Dessinateur de façade</h1><p id="subtitle">Saisissez les dimensions, ajoutez les ouvertures et générez un schéma indicatif d'échafaudage.</p></div><div class="row" style="max-width:320px"><button id="reset" class="secondary">Réinitialiser</button><button id="save">Sauvegarder le projet</button></div></div>
+<div class="layout">
+<aside class="card">
+<h2 id="dimTitle">1. Dimensions de la façade</h2>
+<div class="field"><label id="projectLabel">Nom du chantier</label><input id="project" value="Mon chantier"></div>
+<div class="row"><div class="field"><label id="widthLabel">Longueur (m)</label><input id="width" type="number" min="2" max="100" step=".5" value="12"></div><div class="field"><label id="heightLabel">Hauteur (m)</label><input id="height" type="number" min="2" max="80" step=".5" value="8"></div></div>
+<div class="row"><div class="field"><label id="bayLabel">Largeur de travée (m)</label><select id="bay"><option>2.00</option><option selected>2.50</option><option>3.00</option></select></div><div class="field"><label id="liftLabel">Hauteur de niveau (m)</label><select id="lift"><option>2.00</option><option selected>2.00</option><option>2.50</option></select></div></div>
+<div class="field"><label id="systemLabel">Système</label><select id="system"><option>Layher</option><option>Altrad</option><option>Multidirectionnel</option><option>Cadres classiques</option><option>Autre / générique</option></select></div>
+<hr style="border:0;border-top:1px solid var(--line);margin:15px 0">
+<h2 id="addTitle">2. Ajouter un élément</h2>
+<div class="tools">
+<button data-kind="window" id="addWindow">＋ Fenêtre</button><button data-kind="door" id="addDoor">＋ Porte</button>
+<button data-kind="balcony" id="addBalcony">＋ Balcon</button><button data-kind="obstacle" id="addObstacle">＋ Obstacle</button>
+</div>
+<div id="obstacles" style="margin-top:10px"></div>
+<div class="field"><label id="posLabel">Position horizontale depuis la gauche (m)</label><input id="pos" type="number" min="0" step=".5" value="2"></div>
+<div class="field"><label id="widthObjLabel">Largeur de l'élément (m)</label><input id="objWidth" type="number" min=".5" step=".1" value="1.2"></div>
+<div class="field"><label id="heightObjLabel">Hauteur de l'élément (m)</label><input id="objHeight" type="number" min=".5" step=".1" value="1.2"></div>
+<button id="add" style="width:100%">Ajouter à la façade</button>
+</aside>
+<div>
+<div class="card"><div class="row" style="justify-content:space-between"><h2 id="drawingTitle">3. Aperçu du plan</h2><span id="dimensionsTag" class="label">12 m × 8 m</span></div>
+<div class="canvasWrap"><svg id="drawing" viewBox="0 0 900 500" role="img" aria-label="Schéma de façade et échafaudage"></svg></div>
+<div class="stats"><div class="stat"><b id="bays">5</b><small id="baysLabel">Travées</small></div><div class="stat"><b id="levels">4</b><small id="levelsLabel">Niveaux</small></div><div class="stat"><b id="area">96</b><small id="areaLabel">Surface façade m²</small></div><div class="stat"><b id="deck">60</b><small id="deckLabel">Planchers indicatifs</small></div></div>
+</div>
+<div class="card" style="margin-top:14px"><h2 id="matTitle">4. Estimation indicative du matériel</h2><table><thead><tr><th id="itemHead">Élément</th><th id="qtyHead">Quantité estimée</th></tr></thead><tbody id="materials"></tbody></table></div>
+</div></div>
+<div class="notice" id="warning">ATTENTION : ce dessin et ces quantités sont uniquement indicatifs. Ils ne constituent pas un plan de montage. Le dimensionnement, les charges, la stabilité, les ancrages, les accès, les protections et la conformité doivent être étudiés et validés par une personne compétente selon les exigences suisses, les règles SUVA applicables et la notice du fabricant.</div>
+</main>
+<footer id="footer">Prototype de démonstration SS plan. Données sauvegardées localement dans ce navigateur ; aucune synchronisation serveur n'est active.</footer>
+<script>
+const T={
+fr:{title:"Dessinateur de façade",subtitle:"Saisissez les dimensions, ajoutez les ouvertures et générez un schéma indicatif d'échafaudage.",dimTitle:"1. Dimensions de la façade",projectLabel:"Nom du chantier",widthLabel:"Longueur (m)",heightLabel:"Hauteur (m)",bayLabel:"Largeur de travée (m)",liftLabel:"Hauteur de niveau (m)",systemLabel:"Système",addTitle:"2. Ajouter un élément",addWindow:"＋ Fenêtre",addDoor:"＋ Porte",addBalcony:"＋ Balcon",addObstacle:"＋ Obstacle",posLabel:"Position horizontale depuis la gauche (m)",widthObjLabel:"Largeur de l'élément (m)",heightObjLabel:"Hauteur de l'élément (m)",add:"Ajouter à la façade",drawingTitle:"3. Aperçu du plan",baysLabel:"Travées",levelsLabel:"Niveaux",areaLabel:"Surface façade m²",deckLabel:"Planchers indicatifs",matTitle:"4. Estimation indicative du matériel",itemHead:"Élément",qtyHead:"Quantité estimée",warning:"ATTENTION : ce dessin et ces quantités sont uniquement indicatifs. Ils ne constituent pas un plan de montage. Le dimensionnement, les charges, la stabilité, les ancrages, les accès, les protections et la conformité doivent être étudiés et validés par une personne compétente selon les exigences suisses, les règles SUVA applicables et la notice du fabricant.",footer:"Prototype de démonstration SS plan. Données sauvegardées localement dans ce navigateur ; aucune synchronisation serveur n'est active.",save:"Sauvegarder le projet",reset:"Réinitialiser",print:"PDF / Imprimer",bays:"Travées",levels:"Niveaux",frames:"Montants verticaux (approx.)",ledgers:"Lisses (approx.)",braces:"Diagonales (approx.)",decks:"Planchers (approx.)",guard:"Garde-corps (approx.)",base:"Vérins de base (approx.)",win:"Fenêtre",door:"Porte",balcony:"Balcon",obstacle:"Obstacle",none:"Aucun élément ajouté.",remove:"Supprimer",saved:"Projet sauvegardé sur cet appareil."},
+de:{title:"Fassadenplaner",subtitle:"Maße eingeben, Öffnungen hinzufügen und eine unverbindliche Gerüstskizze erstellen.",dimTitle:"1. Fassadenmaße",projectLabel:"Baustellenname",widthLabel:"Länge (m)",heightLabel:"Höhe (m)",bayLabel:"Feldbreite (m)",liftLabel:"Etagenhöhe (m)",systemLabel:"System",addTitle:"2. Element hinzufügen",addWindow:"＋ Fenster",addDoor:"＋ Tür",addBalcony:"＋ Balkon",addObstacle:"＋ Hindernis",posLabel:"Horizontale Position ab links (m)",widthObjLabel:"Elementbreite (m)",heightObjLabel:"Elementhöhe (m)",add:"Zur Fassade hinzufügen",drawingTitle:"3. Planvorschau",baysLabel:"Felder",levelsLabel:"Etagen",areaLabel:"Fassadenfläche m²",deckLabel:"Beläge (Richtwert)",matTitle:"4. Unverbindliche Materialschätzung",itemHead:"Element",qtyHead:"Geschätzte Menge",warning:"ACHTUNG: Zeichnung und Mengen sind unverbindlich und kein Montageplan. Bemessung, Lasten, Stabilität, Verankerungen, Zugänge, Schutzmaßnahmen und Konformität müssen von einer Fachperson nach Schweizer Anforderungen, geltenden SUVA-Regeln und Herstelleranleitung geprüft werden.",footer:"SS plan Demo-Prototyp. Daten werden lokal in diesem Browser gespeichert; keine Serversynchronisierung aktiv.",save:"Projekt speichern",reset:"Zurücksetzen",print:"PDF / Drucken",bays:"Felder",levels:"Etagen",frames:"Vertikale Ständer (ca.)",ledgers:"Riegel (ca.)",braces:"Diagonalen (ca.)",decks:"Beläge (ca.)",guard:"Seitenschutz (ca.)",base:"Fußspindeln (ca.)",win:"Fenster",door:"Tür",balcony:"Balkon",obstacle:"Hindernis",none:"Noch keine Elemente hinzugefügt.",remove:"Entfernen",saved:"Projekt auf diesem Gerät gespeichert."},
+it:{title:"Progettista di facciate",subtitle:"Inserite le dimensioni, aggiungete aperture e create uno schema indicativo del ponteggio.",dimTitle:"1. Dimensioni della facciata",projectLabel:"Nome del cantiere",widthLabel:"Lunghezza (m)",heightLabel:"Altezza (m)",bayLabel:"Larghezza campata (m)",liftLabel:"Altezza livello (m)",systemLabel:"Sistema",addTitle:"2. Aggiungere un elemento",addWindow:"＋ Finestra",addDoor:"＋ Porta",addBalcony:"＋ Balcone",addObstacle:"＋ Ostacolo",posLabel:"Posizione orizzontale da sinistra (m)",widthObjLabel:"Larghezza elemento (m)",heightObjLabel:"Altezza elemento (m)",add:"Aggiungi alla facciata",drawingTitle:"3. Anteprima del piano",baysLabel:"Campate",levelsLabel:"Livelli",areaLabel:"Superficie facciata m²",deckLabel:"Piani indicativi",matTitle:"4. Stima indicativa dei materiali",itemHead:"Elemento",qtyHead:"Quantità stimata",warning:"ATTENZIONE: disegno e quantità sono puramente indicativi e non costituiscono un piano di montaggio. Dimensionamento, carichi, stabilità, ancoraggi, accessi, protezioni e conformità devono essere verificati da una persona competente secondo i requisiti svizzeri, le regole SUVA applicabili e le istruzioni del produttore.",footer:"Prototipo dimostrativo SS plan. Dati salvati localmente nel browser; nessuna sincronizzazione server attiva.",save:"Salva progetto",reset:"Reimposta",print:"PDF / Stampa",bays:"Campate",levels:"Livelli",frames:"Montanti verticali (circa)",ledgers:"Correnti (circa)",braces:"Diagonali (circa)",decks:"Piani (circa)",guard:"Parapetti (circa)",base:"Basette regolabili (circa)",win:"Finestra",door:"Porta",balcony:"Balcone",obstacle:"Ostacolo",none:"Nessun elemento aggiunto.",remove:"Rimuovi",saved:"Progetto salvato su questo dispositivo."}
+};
+let lang="fr",objects=[];
+const $=id=>document.getElementById(id);
+function tr(k){return T[lang][k]||k}
+function applyLang(){document.documentElement.lang=lang;const map={title:"title",subtitle:"subtitle",dimTitle:"dimTitle",projectLabel:"projectLabel",widthLabel:"widthLabel",heightLabel:"heightLabel",bayLabel:"bayLabel",liftLabel:"liftLabel",systemLabel:"systemLabel",addTitle:"addTitle",addWindow:"addWindow",addDoor:"addDoor",addBalcony:"addBalcony",addObstacle:"addObstacle",posLabel:"posLabel",widthObjLabel:"widthObjLabel",heightObjLabel:"heightObjLabel",add:"add",drawingTitle:"drawingTitle",baysLabel:"baysLabel",levelsLabel:"levelsLabel",areaLabel:"areaLabel",deckLabel:"deckLabel",matTitle:"matTitle",itemHead:"itemHead",qtyHead:"qtyHead",warning:"warning",footer:"footer",save:"save",reset:"reset",print:"print"};Object.entries(map).forEach(([id,k])=>$(id).textContent=tr(k));render()}
+$("lang").onchange=e=>{lang=e.target.value;applyLang()};
+function vals(){let w=Math.max(2,Number($("width").value)||2),h=Math.max(2,Number($("height").value)||2),bay=Number($("bay").value),lift=Number($("lift").value);return {w,h,bay,lift,cols:Math.ceil(w/bay),rows:Math.ceil(h/lift)}}
+function render(){
+ let {w,h,bay,lift,cols,rows}=vals(),area=w*h;
+ $("dimensionsTag").textContent=w+" m × "+h+" m";$("bays").textContent=cols;$("levels").textContent=rows;$("area").textContent=area.toFixed(1);$("deck").textContent=cols*rows;
+ const svg=$("drawing"),x0=95,y0=390,scale=Math.min(650/w,290/h),fw=w*scale,fh=h*scale;
+ let s=`<defs><pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M 20 0 L 0 0 0 20" fill="none" stroke="#eef2f6" stroke-width="1"/></pattern></defs><rect width="900" height="500" fill="url(#grid)"/>`;
+ s+=`<rect x="${x0}" y="${y0-fh}" width="${fw}" height="${fh}" fill="#f5f7fa" stroke="#52657d" stroke-width="2"/>`;
+ // facade openings
+ objects.forEach(o=>{let ox=x0+o.x*scale,ow=o.w*scale,oh=o.h*scale,oy=y0-(o.y||0)*scale-oh;let fill=o.kind==="window"?"#b9d8ec":o.kind==="door"?"#c9b79e":o.kind==="balcony"?"#e9d8b5":"#e8a6a6";s+=`<rect x="${ox}" y="${oy}" width="${ow}" height="${oh}" fill="${fill}" stroke="#52657d" stroke-width="2"/>`;if(o.kind==="balcony")s+=`<path d="M${ox} ${oy+oh*.65}h${ow}m-${ow} 0v${oh*.35}m${ow} 0v-${oh*.35}" stroke="#52657d" stroke-width="3"/>`;});
+ // scaffold structure in front
+ let sx=x0-18,top=y0-fh-30,scW=fw+36,scH=fh+30;
+ s+=`<g stroke="#2463a6" stroke-width="3" fill="none">`;
+ for(let c=0;c<=cols;c++){let x=sx+c*(scW/cols);s+=`<path d="M${x} ${y0+15}V${top}"/>`}
+ for(let r=0;r<=rows;r++){let y=y0+15-r*(scH/rows);s+=`<path d="M${sx} ${y}H${sx+scW}"/>`}
+ for(let c=0;c<cols;c++){for(let r=0;r<rows;r++){let xa=sx+c*scW/cols,xb=sx+(c+1)*scW/cols,ya=y0+15-r*scH/rows,yb=y0+15-(r+1)*scH/rows;if((c+r)%2===0)s+=`<path d="M${xa} ${ya}L${xb} ${yb}" stroke="#6d91b9" stroke-width="1.8"/>`;}}
+ s+="</g>";
+ s+=`<text x="${x0+fw/2}" y="${y0+42}" text-anchor="middle" font-size="16" fill="#334155">${w} m</text><text x="${x0-48}" y="${y0-fh/2}" text-anchor="middle" transform="rotate(-90 ${x0-48} ${y0-fh/2})" font-size="16" fill="#334155">${h} m</text><text x="450" y="30" text-anchor="middle" font-size="18" font-weight="700" fill="#172b4d">SS plan — ${$("project").value||"Chantier"}</text>`;
+ svg.setAttribute("viewBox","0 0 900 500");svg.innerHTML=s;
+ let items=[[tr("frames"),(cols+1)*(rows+1)],[tr("ledgers"),(cols+1)*(rows+1)*2],[tr("braces"),cols*rows],[tr("decks"),cols*rows],[tr("guard"),cols*rows*2],[tr("base"),cols+1]];
+ $("materials").innerHTML=items.map(a=>`<tr><td>${a[0]}</td><td>${a[1]}</td></tr>`).join("");
+ $("obstacles").innerHTML=objects.length?objects.map((o,i)=>`<div class="obstacle"><span>${tr(o.kind)} · x=${o.x}m · ${o.w}×${o.h}m</span><button class="secondary" data-del="${i}" style="padding:4px 8px;color:#172b4d">${tr("remove")}</button></div>`).join(""):`<p style="font-size:12px">${tr("none")}</p>`;
+ document.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{objects.splice(Number(b.dataset.del),1);render()});
+}
+["width","height","bay","lift","project","system"].forEach(id=>$(id).addEventListener("input",render));
+let pending="window";document.querySelectorAll("[data-kind]").forEach(b=>b.onclick=()=>{pending=b.dataset.kind;document.getElementById("pos").value=2;document.getElementById("objWidth").value=pending==="door"?1:1.2;document.getElementById("objHeight").value=pending==="door"?2.1:1.2});
+$("add").onclick=()=>{let {w,h}=vals(),x=Math.max(0,Number($("pos").value)||0),ow=Math.max(.3,Number($("objWidth").value)||1),oh=Math.max(.3,Number($("objHeight").value)||1);if(x+ow>w){alert("L'élément dépasse la largeur de la façade.");return}objects.push({kind:pending,x,w:ow,h:oh,y:pending==="door"?0:Math.min(h-oh,2)});render()};
+$("reset").onclick=()=>{if(confirm("Réinitialiser les dimensions et les éléments ?")){objects=[];$("project").value="Mon chantier";$("width").value=12;$("height").value=8;$("bay").value="2.50";render()}};
+$("save").onclick=()=>{let data={project:$("project").value,width:$("width").value,height:$("height").value,bay:$("bay").value,lift:$("lift").value,system:$("system").value,objects};localStorage.setItem("ssplan_v3_project",JSON.stringify(data));alert(tr("saved"))};
+$("print").onclick=()=>window.print();
+applyLang();render();
+</script></body></html>
